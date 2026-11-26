@@ -18,8 +18,6 @@ function(setup_c_testing TARGET_NAME)
     endif()
 
     if(ENABLE_TEST_COV)
-        enable_testing()
-
         target_link_libraries(${TARGET_NAME} PRIVATE gcov)
         target_compile_options(${TARGET_NAME} PRIVATE "-fprofile-arcs" "-ftest-coverage" "--coverage")
         target_link_options(${TARGET_NAME} PRIVATE "-fprofile-arcs" "-ftest-coverage" "--coverage")
@@ -46,15 +44,15 @@ function(setup_c_testing TARGET_NAME)
         target_compile_options(${_unittest_target} PRIVATE "--coverage")
         target_link_options(${_unittest_target} PRIVATE "--coverage")
 
-        add_test(NAME "${_prefix}UnitTests" COMMAND ${_unittest_target})
+        add_test(NAME "${_prefix}UnitTests" COMMAND $<TARGET_FILE:${_unittest_target}>)
 
         find_program(LCOV_PATH lcov)
         find_program(GENHTML_PATH genhtml)
         if(LCOV_PATH AND GENHTML_PATH)
             set(_cov_target "${_prefix}coverage")
             set(_cov_info "${CMAKE_CURRENT_BINARY_DIR}/coverage.info")
-            set(_cov_filtered "${CMAKE_CURRENT_BINARY_DIR}/coverage_filtered.info")
-            set(_cov_html_dir "${CMAKE_CURRENT_BINARY_DIR}/coverage_html")
+            set(_cov_filtered "${CMAKE_CURRENT_BINARY_DIR}/coverage-filtered.info")
+            set(_cov_html_dir "${CMAKE_CURRENT_BINARY_DIR}/coverage-html")
 
             add_custom_target(${_cov_target}
                 COMMAND ${LCOV_PATH} --directory "${CMAKE_CURRENT_BINARY_DIR}" --zerocounters
