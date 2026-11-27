@@ -1,9 +1,8 @@
-
 # cmake/SetupCTesting.cmake
 include_guard(GLOBAL)
 
 function(setup_c_testing TARGET_NAME)
-    cmake_parse_arguments(ARG "" "PREFIX;TEST_DIR" "" ${ARGN})
+    cmake_parse_arguments(ARG "" "PREFIX;TEST_DIR" "DEPENDENCIES" ${ARGN})
 
     if(NOT DEFINED ARG_PREFIX)
         set(_prefix "${TARGET_NAME}_")
@@ -35,7 +34,8 @@ function(setup_c_testing TARGET_NAME)
             $<$<BOOL:${ENABLE_TEST_COV}>:_TEST_LOCAL_API_>
         )
         target_include_directories(${_unittest_target} PRIVATE "${_test_dir}/testcases")
-        target_link_libraries(${_unittest_target} PRIVATE check gcov ${TARGET_NAME})
+
+        target_link_libraries(${_unittest_target} PRIVATE check gcov ${TARGET_NAME} ${ARG_DEPENDENCIES})
 
         if(GITHUB_CI)
             target_link_libraries(${_unittest_target} PRIVATE subunit)
@@ -45,6 +45,13 @@ function(setup_c_testing TARGET_NAME)
         target_link_options(${_unittest_target} PRIVATE "--coverage")
 
         add_test(NAME "${_prefix}UnitTests" COMMAND $<TARGET_FILE:${_unittest_target}>)
+
+        if(UNIX AND NOT APPLE AND CMAKE_PREFIX_PATH)
+            string(REPLACE ";" "/lib:" _ld_paths "${CMAKE_PREFIX_PATH}")
+            set_tests_properties("${_prefix}UnitTests" PROPERTIES
+                    ENVIRONMENT "LD_LIBRARY_PATH=${_ld_paths}/lib:$ENV{LD_LIBRARY_PATH}"
+            )
+        endif()
 
         find_program(LCOV_PATH lcov)
         find_program(GENHTML_PATH genhtml)
@@ -80,7 +87,7 @@ function(setup_c_testing TARGET_NAME)
         if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_test_dir}/debug.c")
             set(_debug_target "${_prefix}debug")
             add_executable(${_debug_target} "${_test_dir}/debug.c")
-            target_link_libraries(${_debug_target} PRIVATE ${TARGET_NAME})
+            target_link_libraries(${_debug_target} PRIVATE ${TARGET_NAME} ${ARG_DEPENDENCIES})
             target_compile_definitions(${_debug_target} PRIVATE "_TEST_LOCAL_API_")
         endif()
     endif()
