@@ -24,6 +24,7 @@ function(setup_c_library_install TARGET_NAME)
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -56,7 +57,7 @@ function(setup_c_library_install TARGET_NAME)
     if(NOT EXISTS "${_config_in}")
         set(_config_in "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}Config.cmake.in")
         file(WRITE "${_config_in}"
-                "@PACKAGE_INIT@\n\n${_find_deps_code}\ninclude(\"\${CMAKE_CURRENT_LIST_DIR}/${TARGET_NAME}Targets.cmake\")\n"
+                "@PACKAGE_INIT@\n\n${_find_deps_code}\ninclude(\"\${CMAKE_CURRENT_LIST_DIR}/${TARGET_NAME}Targets.cmake\")\nset_and_check(${TARGET_NAME}_INCLUDE_DIRS \"\@PACKAGE_CMAKE_INSTALL_INCLUDEDIR\@\")\n"
         )
     endif()
 
@@ -64,6 +65,7 @@ function(setup_c_library_install TARGET_NAME)
             "${_config_in}"
             "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}Config.cmake"
             INSTALL_DESTINATION ${_cmake_install_dir}
+            PATH_VARS CMAKE_INSTALL_INCLUDEDIR
     )
 
     install(FILES
